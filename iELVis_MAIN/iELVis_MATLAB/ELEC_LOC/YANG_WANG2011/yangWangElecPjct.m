@@ -188,7 +188,8 @@ for a=1:nManElec,
 end
 
 % outer-brain surface check and create
-ntools_elec_outer_brain(subPath); % If smoothed pial surface has NOT been created, I believe this function fails. DG
+% MGS - marking this out until I get MATLAB complete the run on VM - 
+% ntools_elec_outer_brain(subPath); % If smoothed pial surface has NOT been created, I believe this function fails. DG
 
 % Initialize text file Ids
 fidLepto=[];
