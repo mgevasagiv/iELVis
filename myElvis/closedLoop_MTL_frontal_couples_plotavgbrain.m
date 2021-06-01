@@ -142,6 +142,64 @@ ax6 = axes('position',[0.4,0.5,.2,.2],'units','centimeters');
 ax7 = axes('position',[0.1,0.7,.2,.2],'units','centimeters');
 ax8 = axes('position',[0.4,0.7,.2,.2],'units','centimeters');
 
+ 
+frontalElecColor = [0,0,0];
+MTLElecColor = [0.1098,0.0980,0.8431];
+elecColors = [repmat(MTLElecColor,length(anatomyInfo.PgroupLabels),1);...
+    repmat(frontalElecColor,length(anatomyInfo.SgroupLabels),1)];
+
+[subGroup, cmap] = defineSubGroups_stimAnatomy();
+cmap(3,:) = [0.2,0.2,0.2];
+for p_ct = 1:length(anatomyInfo.patients)
+    pairs{p_ct,1} = anatomyInfo.PgroupLabels{p_ct};
+    pairs{p_ct,2} = anatomyInfo.SgroupLabels{p_ct};
+    
+    for ii_g = 1:3
+        if ismember(str2num(anatomyInfo.PgroupLabels{p_ct}(1:3)),subGroup{ii_g})
+            pairs{p_ct,3} = cmap(ii_g,:);
+        end
+    end
+    pairs{p_ct,4} = anatomyInfo.PgroupLabels{p_ct}(5);
+end
+
+cfg=[]; 
+cfg.surfType = 'pial';
+cfg.view='li';
+cfg.ignoreDepthElec='n';
+cfg.opaqueness=0.3;
+cfg.elecSize = 2;
+cfg.elecColors = elecColors;
+cfg.elecColorScale = [0 64];
+cfg.showLabels='n';
+cfg.title= '';
+cfg.elecCoord = [[anatomyInfo.PgroupAvgCoords,anatomyInfo.PgroupIsLeft];[anatomyInfo.SgroupAvgCoords,anatomyInfo.SgroupIsLeft]];  
+cfg.elecNames = [anatomyInfo.PgroupLabels,anatomyInfo.SgroupLabels];
+% for ii = 1:length(anatomyInfo.PgroupLabels)
+%     cfg.elecNames{ii} = num2str(ii);
+%     cfg.elecNames{ii+length(anatomyInfo.PgroupLabels)} = num2str(ii);
+% end
+cfg.pairs = pairs;
+cfg.lineWidth = 0.4;
+cfg.edgeBlack = 'n';
+cfg.axis = ax7;
+cfgOut=plotPialSurf('fsaverage',cfg);
+cfg.view='ri';
+cfg.axis = ax8;
+cfgOut=plotPialSurf('fsaverage',cfg);
+
+
+
+outputFigureFolder = fullfile(globalFsDir,'anatomyPlotsFigures');
+
+a = gcf;
+set(a,'renderer','zbuffer');
+res = 600;
+eval(['print ', [outputFigureFolder,'\',figName], ' -f', num2str(a.Number),sprintf(' -depsc  -r%d',res), '-cmyk' ]); % adding r600 slows down this process significantly!
+res = 600;
+eval(['print ', [outputFigureFolder,'\',figName], ' -f', num2str(a.Number),sprintf(' -dtiff  -r%d',res), '-cmyk' ]); % adding r600 slows down this process significantly!
+
+%% Other options
+
 elecColors = repmat([0,0,1],length(anatomyInfo.PgroupLabels),1);
 % brain
 cfg=[]; 
@@ -174,7 +232,7 @@ cfg.elecColorScale = [0 64];
 cfg.showLabels='n';
 cfg.title= '';
 cfg.elecCoord = [anatomyInfo.SgroupAvgCoords,anatomyInfo.SgroupIsLeft];  
-cfg.elecNames = anatomyInfo.SgroupLabels;
+cfg.elecNames = anatomyInfo.SgroupLabelnss;
 cfg.axis = ax3;
 cfgOut=plotPialSurf('fsaverage',cfg);
 cfg.view='r';
@@ -200,7 +258,7 @@ cfgOut=plotPialSurf('fsaverage',cfg);
 cfg.view='ri';
 cfg.axis = ax6;
 cfgOut=plotPialSurf('fsaverage',cfg);
-
+             
 [subGroup, cmap] = defineSubGroups_stimAnatomy();
 cmap(3,:) = [0.2,0.2,0.2];
 for p_ct = 1:length(anatomyInfo.patients)
@@ -261,7 +319,7 @@ cfg.elecNames = [anatomyInfo.PgroupLabels,anatomyInfo.SgroupLabels];
 % cfg.pairs = pairs;
 cfg.lineWidth = 0.4;
 cfg.edgeBlack = 'n';
-cfg.axis = ax5;
+cfg.axis = ax5;  
 cfgOut=plotPialSurf('fsaverage',cfg);
 cfg.view='ri';
 cfg.axis = ax6;

@@ -102,17 +102,25 @@ for iContact = 1:length(corticalStimEffectIndices.allSWEvent)
         clear avgCoords ELEC_NAMES isLeft
     end
 end         
+
 % Display effect for targeted stimulation patients
-pt_vec = corticalStimEffectIndices.pt_vec(~ismember(contactID,subGroup{2}) );
-allSWEvent = corticalStimEffectIndices.allSWEvent(~ismember(contactID,subGroup{2}),:);
-allSpEvent = corticalStimEffectIndices.allSpEvent(~ismember(contactID,subGroup{2}),:);
-allSWSpEvent = corticalStimEffectIndices.allSWSpEvent(~ismember(contactID,subGroup{2}),:);
+pt_vec = corticalStimEffectIndices.pt_vec(contactID);
+allSWEvent = corticalStimEffectIndices.allSWEvent(contactID,:);
+allSpEvent = corticalStimEffectIndices.allSpEvent(contactID,:);
+allSWSpEvent = corticalStimEffectIndices.allSWSpEvent(contactID,:);
+
+allSp_prob = corticalStimEffectIndices.allSp_prob(contactID,:);
+allSW_prob = corticalStimEffectIndices.allSW_prob(contactID,:);
+allSWSp_prob = corticalStimEffectIndices.allSWSp_prob(contactID,:);
+
 DIFF =  allSpEvent(:,1)-allSpEvent(:,2);
 
 
 anatomyInfo.patients = pt_vec;
 anatomyInfo.allSWEvent = allSWEvent;
 anatomyInfo.allSpEvent = allSpEvent;
+anatomyInfo.allSW_prob = allSW_prob;
+anatomyInfo.allSp_prob = allSp_prob;
 
 anatomyInfo.PgroupAvgCoords = PgroupAvgCoords;
 anatomyInfo.PgroupLabels = PgroupLabels;
@@ -127,7 +135,8 @@ pt_vec = anatomyInfo.patients;
 anatomyInfo.patients = pt_vec;
 allSWEvent = anatomyInfo.allSWEvent;
 allSpEvent = anatomyInfo.allSpEvent;
-DIFF =  allSpEvent(:,1)-allSpEvent(:,2);
+allSp_prob = anatomyInfo.allSp_prob;
+DIFF =  allSp_prob(:,1)-allSp_prob(:,2);
 
 figName = sprintf('stimEffects_locations');
 f0 = figure('Name', figName,'NumberTitle','off');
@@ -153,9 +162,168 @@ N = 64;
 % map = brewermap(N,'RdYlBu');
 map = brewermap(N,'RdBu');
 map = flipud(map);
-values = linspace(-2,2,N);
+values = linspace(-1.5,1.5,N);
 [colorBin,~] = discretize(DIFF,values);
-colorBin(find(DIFF > values(end))) = length(values);
+colorBin(find(DIFF < values(1))) = 1;
+colorBin(find(DIFF > values(end))) = N;
+elecColors = map(colorBin,:);
+
+N = 64;
+% map = colormap('jet');
+% map = brewermap(N,'RdYlBu');
+map = brewermap(N,'RdBu');
+map = flipud(map);
+values = linspace(-.1,.1,N);
+[colorBin,~] = discretize(DIFF,values);
+colorBin(find(DIFF < values(1))) = 1;
+colorBin(find(DIFF > values(end))) = N;
+elecColors = map(colorBin,:);
+
+
+% brain
+cfg=[]; 
+cfg.view='li';
+cfg.ignoreDepthElec='n';
+cfg.opaqueness=0.3;
+cfg.elecSize = 2;
+cfg.elecColors = elecColors;
+cfg.elecColorScale = [0 64];
+cfg.showLabels='n';
+cfg.title= '';
+cfg.edgeBlack = 'n';
+cfg.elecCoord = [anatomyInfo.PgroupAvgCoords,anatomyInfo.PgroupIsLeft];  
+cfg.elecNames = anatomyInfo.PgroupLabels;
+cfg.axis = ax1;
+cfgOut=plotPialSurf('fsaverage',cfg);
+colorbar(ax1,'off')
+cfg.view='ri';
+cfg.axis = ax2;
+cfgOut=plotPialSurf('fsaverage',cfg);
+colorbar(ax2,'off')
+
+cfg=[]; 
+cfg.ignoreDepthElec='n';
+cfg.opaqueness=0.3;
+cfg.elecSize = 3;
+cfg.elecColors = elecColors;
+cfg.elecColorScale = [0 64];
+cfg.showLabels='n';
+cfg.title= '';
+cfg.edgeBlack = 'n';
+cfg.elecCoord = [anatomyInfo.PgroupAvgCoords,anatomyInfo.PgroupIsLeft];  
+cfg.elecNames = anatomyInfo.PgroupLabels;
+cfg.axis = ax3;
+cfg.view='lm';
+cfgOut=plotPialSurf('fsaverage',cfg);
+cfg.view='rm';
+cfg.axis = ax4;
+cfgOut=plotPialSurf('fsaverage',cfg);
+
+
+cfg=[]; 
+cfg.ignoreDepthElec='n';
+cfg.opaqueness=0.3;
+cfg.elecSize = 3;
+cfg.elecColors = elecColors;
+cfg.elecColorScale = [0 64];
+cfg.showLabels='n';
+cfg.title= '';
+cfg.edgeBlack = 'n';
+cfg.elecCoord = [anatomyInfo.PgroupAvgCoords,anatomyInfo.PgroupIsLeft];  
+cfg.elecNames = anatomyInfo.PgroupLabels;
+cfg.axis = ax5;
+cfg.view='lsv';
+cfgOut=plotPialSurf('fsaverage',cfg);
+cfg.view='rsv';
+cfg.axis = ax6;
+cfgOut=plotPialSurf('fsaverage',cfg);
+
+
+brainView.light=[1 0 0];
+brainView.hem='r';
+brainView.eyes=[45 0]
+cfg.view=brainView
+
+cfg=[]; 
+cfg.ignoreDepthElec='n';
+cfg.opaqueness=0.3;
+cfg.elecSize = 3;
+cfg.elecColors = elecColors;
+cfg.elecColorScale = [0 64];
+cfg.showLabels='n';
+cfg.title= '';
+cfg.edgeBlack = 'n';
+cfg.elecCoord = [anatomyInfo.PgroupAvgCoords,anatomyInfo.PgroupIsLeft];  
+cfg.elecNames = anatomyInfo.PgroupLabels;
+cfg.axis = ax7;
+cfg.view='l';
+cfgOut=plotPialSurf('fsaverage',cfg);
+view(ax7,[-94,27])
+
+cfg.view='r';
+cfg.axis = ax8;
+cfgOut=plotPialSurf('fsaverage',cfg);
+view(ax8,[94,27])
+
+outputFigureFolder = fullfile(globalFsDir,'anatomyPlotsFigures');
+
+a = gcf;
+set(f0,'renderer','zbuffer');
+% res = 400;
+% eval(['print ', [outputFigureFolder,'\',figName], ' -f', num2str(a.Number),sprintf(' -depsc  -r%d',res), '-cmyk' ]); % adding r600 slows down this process significantly!
+res = 600;
+eval(['print ', [outputFigureFolder,'\',figName], ' -f', num2str(a.Number),sprintf(' -dtiff  -r%d',res), '-cmyk' ]); % adding r600 slows down this process significantly!
+
+figure
+figName = 'rendererColorbar';
+imagesc(1*ones(1,64),1:64,values)
+colormap(map)
+cc = colorbar;
+cc.TickDirection = 'out';
+cc.Ticks = [-2,0,2];
+title(sprintf('axis limits- [%f,%f]',values(1),values(end)))
+a = gcf;
+res = 600;
+eval(['print ', [outputFigureFolder,'\',figName], ' -f', num2str(a.Number),sprintf(' -dtiff  -r%d',res), '-cmyk' ]); % adding r600 slows down this process significantly!
+
+
+%%
+%% Plotting stim and probe on one brain
+anatomyInfo = load(fullfile(globalFsDir,'anatomyPlotsData','stimEffectSleepOsc'),'anatomyInfo');
+anatomyInfo = anatomyInfo.anatomyInfo;
+pt_vec = anatomyInfo.patients;
+anatomyInfo.patients = pt_vec;
+allSWEvent = anatomyInfo.allSWEvent;
+allSpEvent = anatomyInfo.allSpEvent;
+DIFF =  allSWEvent(:,1)-allSWEvent(:,2);
+
+figName = sprintf('stimEffects_locations_SW');
+f0 = figure('Name', figName,'NumberTitle','off');
+% Some WYSIWYG options:
+set(gcf,'DefaultAxesFontSize',10);
+set(gcf,'DefaultAxesFontName','arial');
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0.2 0.2 19 24.7]); % this size is the maximal to fit on an A4 paper when printing to PDF
+set(gcf,'PaperOrientation','portrait');
+set(gcf,'Units','centimeters','Position', get(gcf,'paperPosition')+[1 1 0 0]);
+colormap('jet');
+
+ax1 = axes('position',[0.1,0.1,.2,.2],'units','centimeters');
+ax2 = axes('position',[0.4,0.1,.2,.2],'units','centimeters');
+ax3 = axes('position',[0.1,0.3,.2,.2],'units','centimeters');
+ax4 = axes('position',[0.4,0.3,.2,.2],'units','centimeters');
+ax5 = axes('position',[0.1,0.5,.2,.2],'units','centimeters');
+ax6 = axes('position',[0.4,0.5,.2,.2],'units','centimeters');
+ax7 = axes('position',[0.1,0.7,.2,.2],'units','centimeters');
+ax8 = axes('position',[0.4,0.7,.2,.2],'units','centimeters');
+
+N = 64;
+% map = colormap('jet');
+% map = brewermap(N,'RdYlBu');
+map = brewermap(N,'RdBu');
+map = flipud(map);
+values = linspace(-6,6,N);
+[colorBin,~] = discretize(DIFF,values);
+colorBin(find(DIFF < values(1))) = 1;
 elecColors = map(colorBin,:);
 
 % brain
@@ -221,6 +389,101 @@ brainView.light=[1 0 0];
 brainView.hem='r';
 brainView.eyes=[45 0]
 cfg.view=brainView
+
+cfg=[]; 
+cfg.ignoreDepthElec='n';
+cfg.opaqueness=0.3;
+cfg.elecSize = 3;
+cfg.elecColors = elecColors;
+cfg.elecColorScale = [0 64];
+cfg.showLabels='n';
+cfg.title= '';
+cfg.edgeBlack = 'n';
+cfg.elecCoord = [anatomyInfo.PgroupAvgCoords,anatomyInfo.PgroupIsLeft];  
+cfg.elecNames = anatomyInfo.PgroupLabels;
+cfg.axis = ax7;
+cfg.view='l';
+cfgOut=plotPialSurf('fsaverage',cfg);
+view(ax7,[-94,27])
+
+cfg.view='r';
+cfg.axis = ax8;
+cfgOut=plotPialSurf('fsaverage',cfg);
+view(ax8,[94,27])
+
+outputFigureFolder = fullfile(globalFsDir,'anatomyPlotsFigures');
+
+a = gcf;
+set(f0,'renderer','zbuffer');
+% res = 400;
+% eval(['print ', [outputFigureFolder,'\',figName], ' -f', num2str(a.Number),sprintf(' -depsc  -r%d',res), '-cmyk' ]); % adding r600 slows down this process significantly!
+res = 600;
+eval(['print ', [outputFigureFolder,'\',figName], ' -f', num2str(a.Number),sprintf(' -dtiff  -r%d',res), '-cmyk' ]); % adding r600 slows down this process significantly!
+
+figure
+figName = 'rendererColorbar';
+imagesc(1*ones(1,64),1:64,values)
+colormap(map)
+cc = colorbar;
+cc.TickDirection = 'out';
+cc.Ticks = [-2,0,2];
+title(sprintf('axis limits- [%f,%f]',values(1),values(end)))
+a = gcf;
+res = 600;
+eval(['print ', [outputFigureFolder,'\',figName], ' -f', num2str(a.Number),sprintf(' -dtiff  -r%d',res), '-cmyk' ]); % adding r600 slows down this process significantly!
+
+
+%% Final version
+
+
+anatomyInfo = load(fullfile(globalFsDir,'anatomyPlotsData','stimEffectSleepOsc'),'anatomyInfo');
+anatomyInfo = anatomyInfo.anatomyInfo;
+pt_vec = anatomyInfo.patients;
+anatomyInfo.patients = pt_vec;
+allSp_prob = anatomyInfo.allSp_prob;
+DIFF =  allSp_prob(:,1)-allSp_prob(:,2);
+
+
+frontalVec = logical(zeros(1,length(pt_vec)));
+for ii = 1:length(pt_vec)
+    area = classifyArea(anatomyInfo.PgroupLabels{ii}(5:end-1));
+    if area.isFrontal
+        frontalVec(ii) = true;
+    end
+end
+[p,h,stats] = ranksum(DIFF(frontalVec),DIFF(~frontalVec));
+
+
+figName = sprintf('stimEffects_locations_SW');
+f0 = figure('Name', figName,'NumberTitle','off');
+% Some WYSIWYG options:
+set(gcf,'DefaultAxesFontSize',10);
+set(gcf,'DefaultAxesFontName','arial');
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0.2 0.2 19 24.7]); % this size is the maximal to fit on an A4 paper when printing to PDF
+set(gcf,'PaperOrientation','portrait');
+set(gcf,'Units','centimeters','Position', get(gcf,'paperPosition')+[1 1 0 0]);
+colormap('jet');
+
+ax1 = axes('position',[0.1,0.1,.2,.2],'units','centimeters');
+ax2 = axes('position',[0.4,0.1,.2,.2],'units','centimeters');
+ax3 = axes('position',[0.1,0.3,.2,.2],'units','centimeters');
+ax4 = axes('position',[0.4,0.3,.2,.2],'units','centimeters');
+ax5 = axes('position',[0.1,0.5,.2,.2],'units','centimeters');
+ax6 = axes('position',[0.4,0.5,.2,.2],'units','centimeters');
+ax7 = axes('position',[0.1,0.7,.2,.2],'units','centimeters');
+ax8 = axes('position',[0.4,0.7,.2,.2],'units','centimeters');
+
+N = 64;
+% map = colormap('jet');
+% map = brewermap(N,'RdYlBu');
+map = brewermap(N,'RdBu');
+map = flipud(map);
+values = linspace(-.1,.1,N);
+[colorBin,~] = discretize(DIFF,values);
+colorBin(find(DIFF < values(1))) = 1;
+colorBin(find(DIFF > values(end))) = N;
+elecColors = map(colorBin,:);
+
 
 cfg=[]; 
 cfg.ignoreDepthElec='n';
